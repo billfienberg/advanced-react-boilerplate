@@ -1,36 +1,23 @@
-# source:
-# timestamp: Wed Jan 30 2019 20:34:36 GMT-0600 (Central Standard Time)
-
 type AggregateUser {
   count: Int!
 }
 
 type BatchPayload {
-  """
-  The number of nodes that have been affected by the Batch operation.
-  """
   count: Long!
 }
 
-"""
-The `Long` scalar type represents non-fractional signed whole numeric values.
-Long can represent values between -(2^63) and 2^63 - 1.
-"""
 scalar Long
 
 type Mutation {
   createUser(data: UserCreateInput!): User!
   updateUser(data: UserUpdateInput!, where: UserWhereUniqueInput!): User
-  deleteUser(where: UserWhereUniqueInput!): User
+  updateManyUsers(data: UserUpdateInput!, where: UserWhereInput): BatchPayload!
   upsertUser(
     where: UserWhereUniqueInput!
     create: UserCreateInput!
     update: UserUpdateInput!
   ): User!
-  updateManyUsers(
-    data: UserUpdateManyMutationInput!
-    where: UserWhereInput
-  ): BatchPayload!
+  deleteUser(where: UserWhereUniqueInput!): User
   deleteManyUsers(where: UserWhereInput): BatchPayload!
 }
 
@@ -40,42 +27,25 @@ enum MutationType {
   DELETED
 }
 
-"""
-An object with an ID
-"""
 interface Node {
-  """
-  The id of the object.
-  """
   id: ID!
 }
 
-"""
-Information about pagination in a connection.
-"""
 type PageInfo {
-  """
-  When paginating forwards, are there more items?
-  """
   hasNextPage: Boolean!
-
-  """
-  When paginating backwards, are there more items?
-  """
   hasPreviousPage: Boolean!
-
-  """
-  When paginating backwards, the cursor to continue.
-  """
   startCursor: String
-
-  """
-  When paginating forwards, the cursor to continue.
-  """
   endCursor: String
 }
 
+enum Permission {
+  ADMIN
+  USER
+  PERMISSIONUPDATE
+}
+
 type Query {
+  user(where: UserWhereUniqueInput!): User
   users(
     where: UserWhereInput
     orderBy: UserOrderByInput
@@ -85,7 +55,6 @@ type Query {
     first: Int
     last: Int
   ): [User]!
-  user(where: UserWhereUniqueInput!): User
   usersConnection(
     where: UserWhereInput
     orderBy: UserOrderByInput
@@ -95,59 +64,44 @@ type Query {
     first: Int
     last: Int
   ): UserConnection!
-
-  """
-  Fetches an object given its ID
-  """
-  node(
-    """
-    The ID of an object
-    """
-    id: ID!
-  ): Node
+  node(id: ID!): Node
 }
 
 type Subscription {
   user(where: UserSubscriptionWhereInput): UserSubscriptionPayload
 }
 
-type User implements Node {
+type User {
   id: ID!
   name: String!
+  email: String!
+  password: String!
+  resetToken: String
+  resetTokenExpiry: Float
+  permissions: [Permission!]!
 }
 
-"""
-A connection to a list of items.
-"""
 type UserConnection {
-  """
-  Information to aid in pagination.
-  """
   pageInfo: PageInfo!
-
-  """
-  A list of edges.
-  """
   edges: [UserEdge]!
   aggregate: AggregateUser!
 }
 
 input UserCreateInput {
   name: String!
+  email: String!
+  password: String!
+  resetToken: String
+  resetTokenExpiry: Float
+  permissions: UserCreatepermissionsInput
 }
 
-"""
-An edge in a connection.
-"""
-type UserEdge {
-  """
-  The item at the end of the edge.
-  """
-  node: User!
+input UserCreatepermissionsInput {
+  set: [Permission!]
+}
 
-  """
-  A cursor for use in pagination.
-  """
+type UserEdge {
+  node: User!
   cursor: String!
 }
 
@@ -156,15 +110,28 @@ enum UserOrderByInput {
   id_DESC
   name_ASC
   name_DESC
-  updatedAt_ASC
-  updatedAt_DESC
+  email_ASC
+  email_DESC
+  password_ASC
+  password_DESC
+  resetToken_ASC
+  resetToken_DESC
+  resetTokenExpiry_ASC
+  resetTokenExpiry_DESC
   createdAt_ASC
   createdAt_DESC
+  updatedAt_ASC
+  updatedAt_DESC
 }
 
 type UserPreviousValues {
   id: ID!
   name: String!
+  email: String!
+  password: String!
+  resetToken: String
+  resetTokenExpiry: Float
+  permissions: [Permission!]!
 }
 
 type UserSubscriptionPayload {
@@ -175,200 +142,114 @@ type UserSubscriptionPayload {
 }
 
 input UserSubscriptionWhereInput {
-  """
-  Logical AND on all given filters.
-  """
-  AND: [UserSubscriptionWhereInput!]
-
-  """
-  Logical OR on all given filters.
-  """
-  OR: [UserSubscriptionWhereInput!]
-
-  """
-  Logical NOT on all given filters combined by AND.
-  """
-  NOT: [UserSubscriptionWhereInput!]
-
-  """
-  The subscription event gets dispatched when it's listed in mutation_in
-  """
   mutation_in: [MutationType!]
-
-  """
-  The subscription event gets only dispatched when one of the updated fields names is included in this list
-  """
   updatedFields_contains: String
-
-  """
-  The subscription event gets only dispatched when all of the field names included in this list have been updated
-  """
   updatedFields_contains_every: [String!]
-
-  """
-  The subscription event gets only dispatched when some of the field names included in this list have been updated
-  """
   updatedFields_contains_some: [String!]
   node: UserWhereInput
+  AND: [UserSubscriptionWhereInput!]
+  OR: [UserSubscriptionWhereInput!]
+  NOT: [UserSubscriptionWhereInput!]
 }
 
 input UserUpdateInput {
   name: String
+  email: String
+  password: String
+  resetToken: String
+  resetTokenExpiry: Float
+  permissions: UserUpdatepermissionsInput
 }
 
-input UserUpdateManyMutationInput {
-  name: String
+input UserUpdatepermissionsInput {
+  set: [Permission!]
 }
 
 input UserWhereInput {
-  """
-  Logical AND on all given filters.
-  """
-  AND: [UserWhereInput!]
-
-  """
-  Logical OR on all given filters.
-  """
-  OR: [UserWhereInput!]
-
-  """
-  Logical NOT on all given filters combined by AND.
-  """
-  NOT: [UserWhereInput!]
   id: ID
-
-  """
-  All values that are not equal to given value.
-  """
   id_not: ID
-
-  """
-  All values that are contained in given list.
-  """
   id_in: [ID!]
-
-  """
-  All values that are not contained in given list.
-  """
   id_not_in: [ID!]
-
-  """
-  All values less than the given value.
-  """
   id_lt: ID
-
-  """
-  All values less than or equal the given value.
-  """
   id_lte: ID
-
-  """
-  All values greater than the given value.
-  """
   id_gt: ID
-
-  """
-  All values greater than or equal the given value.
-  """
   id_gte: ID
-
-  """
-  All values containing the given string.
-  """
   id_contains: ID
-
-  """
-  All values not containing the given string.
-  """
   id_not_contains: ID
-
-  """
-  All values starting with the given string.
-  """
   id_starts_with: ID
-
-  """
-  All values not starting with the given string.
-  """
   id_not_starts_with: ID
-
-  """
-  All values ending with the given string.
-  """
   id_ends_with: ID
-
-  """
-  All values not ending with the given string.
-  """
   id_not_ends_with: ID
   name: String
-
-  """
-  All values that are not equal to given value.
-  """
   name_not: String
-
-  """
-  All values that are contained in given list.
-  """
   name_in: [String!]
-
-  """
-  All values that are not contained in given list.
-  """
   name_not_in: [String!]
-
-  """
-  All values less than the given value.
-  """
   name_lt: String
-
-  """
-  All values less than or equal the given value.
-  """
   name_lte: String
-
-  """
-  All values greater than the given value.
-  """
   name_gt: String
-
-  """
-  All values greater than or equal the given value.
-  """
   name_gte: String
-
-  """
-  All values containing the given string.
-  """
   name_contains: String
-
-  """
-  All values not containing the given string.
-  """
   name_not_contains: String
-
-  """
-  All values starting with the given string.
-  """
   name_starts_with: String
-
-  """
-  All values not starting with the given string.
-  """
   name_not_starts_with: String
-
-  """
-  All values ending with the given string.
-  """
   name_ends_with: String
-
-  """
-  All values not ending with the given string.
-  """
   name_not_ends_with: String
+  email: String
+  email_not: String
+  email_in: [String!]
+  email_not_in: [String!]
+  email_lt: String
+  email_lte: String
+  email_gt: String
+  email_gte: String
+  email_contains: String
+  email_not_contains: String
+  email_starts_with: String
+  email_not_starts_with: String
+  email_ends_with: String
+  email_not_ends_with: String
+  password: String
+  password_not: String
+  password_in: [String!]
+  password_not_in: [String!]
+  password_lt: String
+  password_lte: String
+  password_gt: String
+  password_gte: String
+  password_contains: String
+  password_not_contains: String
+  password_starts_with: String
+  password_not_starts_with: String
+  password_ends_with: String
+  password_not_ends_with: String
+  resetToken: String
+  resetToken_not: String
+  resetToken_in: [String!]
+  resetToken_not_in: [String!]
+  resetToken_lt: String
+  resetToken_lte: String
+  resetToken_gt: String
+  resetToken_gte: String
+  resetToken_contains: String
+  resetToken_not_contains: String
+  resetToken_starts_with: String
+  resetToken_not_starts_with: String
+  resetToken_ends_with: String
+  resetToken_not_ends_with: String
+  resetTokenExpiry: Float
+  resetTokenExpiry_not: Float
+  resetTokenExpiry_in: [Float!]
+  resetTokenExpiry_not_in: [Float!]
+  resetTokenExpiry_lt: Float
+  resetTokenExpiry_lte: Float
+  resetTokenExpiry_gt: Float
+  resetTokenExpiry_gte: Float
+  AND: [UserWhereInput!]
+  OR: [UserWhereInput!]
+  NOT: [UserWhereInput!]
 }
 
 input UserWhereUniqueInput {
   id: ID
+  email: String
 }
